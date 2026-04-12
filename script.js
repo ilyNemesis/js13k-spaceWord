@@ -455,3 +455,5 @@ function restartStateGame() {
     lastTime = 0
     invencibilityTime = 2000
 }
+
+export { getRandomInt, rectIntersect, circleIntersect, timeToString, generateString };
