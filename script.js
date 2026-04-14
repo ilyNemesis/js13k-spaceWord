@@ -456,4 +456,4 @@ function restartStateGame() {
     invencibilityTime = 2000
 }
 
-export { getRandomInt, rectIntersect, circleIntersect, timeToString, generateString };
+// export { getRandomInt, rectIntersect, circleIntersect, timeToString, generateString };
