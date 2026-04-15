@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { getRandomInt, rectIntersect, circleIntersect, timeToString, generateString } from './script.utils.js';
+import { getRandomInt, rectIntersect, circleIntersect, timeToString, generateString } from './script.js';
 
 // getRandomInt(-42, 42) < 43 returns true
 // getRandomInt(42, 42) returns 42
