@@ -1,0 +1,121 @@
+name: CI SpaceWord
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+        id: unit
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Unit Tests Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.unit.outcome }}" == "success" ]; then
+            echo "All unit tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Some unit tests failed. See logs above for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  functional-tests:
+    name: Functional Tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        id: playwright
+        run: npx playwright test
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Functional Tests Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.playwright.outcome }}" == "success" ]; then
+            echo "All functional tests passed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Some functional tests failed. See playwright-report artifact for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  security:
+    name: Security Audit (npm audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        id: audit
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+
+      - name: Audit summary
+        if: always()
+        run: |
+          echo "## Security Audit Results" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.audit.outcome }}" == "success" ]; then
+            echo "No known vulnerabilities found." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Vulnerabilities detected. Review npm audit output above." >> $GITHUB_STEP_SUMMARY
+          fi
